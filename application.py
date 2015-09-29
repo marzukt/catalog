@@ -11,7 +11,32 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-# List all categories
+# Show all books
+@app.route('/book/')
+def showBooks():
+    return "list all books"
+
+# Show a book
+@app.route('/book/<int:book_id>/')
+def showBook(book_id):
+    return 'Page showing book_id {}'.format(book_id)
+
+# Add a book
+@app.route('/book/new/')
+def newBook():
+    return 'Page to add a new book'
+
+# Edit a book
+@app.route('/book/<int:book_id>/edit/')
+def editBook(book_id):
+    return 'Page to edit  book {}'.format(book_id)
+
+# Delete a book
+@app.route('/book/<int:book_id>/delete/')
+def deleteBook(book_id):
+    return 'Page to delete book'
+
+## List all categories
 @app.route('/')
 @app.route('/category/')
 def showCategories():
@@ -21,11 +46,21 @@ def showCategories():
         output += '<h1> Categories </h1>'
         output += category.name
         output += '</br>'
-    return output
+    return 'Page to show categories'
 
+@app.route('/category/new/')
+def newCategory():
+    return 'page for adding a new Category'
+
+# Edit a category
 @app.route('/category/<int:category_id>/edit/')
 def editCategory(category_id):
-    return 'this is a page for editing the catalog with the id {}'.format(category_id)
+    return 'This is a page for editing the catalog with the id {}'.format(category_id)
+
+# Delete a category
+@app.route('/category/<int:category_id>/delete/')
+def deleteCategory(category_id):
+    return 'page for deleting category {}'.format(category_id)
 
 # Test page
 @app.route('/test/')
