@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, jsonify, url_for, f
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 # import schema from database_setup
-from database_setup import Base, Category
+from database_setup import Base, User, Book, Category, BookCategory, Author
 
 app = Flask(__name__)
 # Connect to a database and create a database session
@@ -11,10 +11,15 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-# Show all books
+#Show all books
 @app.route('/book/')
 def showBooks():
-    return "list all books"
+    books = session.query(Book).all()
+    output = ''
+    for book in books:
+        output += 'id: {} , name: {}'.format(book.id, book.name)
+        output += '</br>'
+    return output
 
 # Show a book
 @app.route('/book/<int:book_id>/')
