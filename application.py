@@ -24,7 +24,11 @@ def showBooks():
 # Show a book
 @app.route('/book/<int:book_id>/')
 def showBook(book_id):
-    return 'Page showing book_id {}'.format(book_id)
+    book = session.query(Book).filter_by(id = book_id).one()
+    output = ''
+    output += 'id: {} , name: {}'.format(book.id, book.name)
+    output += '</br>'
+    return output
 
 # Add a book
 @app.route('/book/new/')
