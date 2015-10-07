@@ -1,0 +1,9 @@
+{% extends "main.html" %}
+{% block content %}
+	{% if books !=[] %}	
+		{% for i in books %}
+        <h2>{{i.name}}</h2>
+			<p>{{i.description}}</p>
+		{% endfor %}
+	{% endif %}
+{% endblock %}

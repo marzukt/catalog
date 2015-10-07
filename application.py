@@ -15,11 +15,7 @@ session = DBSession()
 @app.route('/book/')
 def showBooks():
     books = session.query(Book).all()
-    output = ''
-    for book in books:
-        output += 'id: {} , name: {}'.format(book.id, book.name)
-        output += '</br>'
-    return output
+    return render_template('books.html', books = books)
 
 # Show a book
 @app.route('/book/<int:book_id>/')
