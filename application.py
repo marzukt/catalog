@@ -32,9 +32,26 @@ def newBook():
     return 'Page to add a new book'
 
 # Edit a book
-@app.route('/book/<int:book_id>/edit/')
+@app.route('/book/<int:book_id>/edit/', methods=['GET','POST'])
 def editBook(book_id):
-    return 'Page to edit  book {}'.format(book_id)
+    editedBook = session.query(Book).filter_by(id = book_id).one()
+    if request.method == 'POST':
+        if request.form['name']:
+            editedBook.name = request.form['name']
+        if request.form['description']:
+            editedBook.description = request.form['description']
+        if request.form['cover']:
+            editedBook.cover = request.form['cover']
+        if request.form['guttenberg_url']:
+            editedBook.guttenberg_url = request.form['guttenberg_url']
+        if request.form['amazon_url']:
+            editedBook.amazon_url = request.form['amazon_url']
+        session.add(editedBook)
+        session.commit()
+        print url_for('showBooks')
+        return redirect(url_for('showBooks'))
+    else:
+        return render_template('editBook.html', book_id = book_id, book = editedBook)
 
 # Delete a book
 @app.route('/book/<int:book_id>/delete/')
