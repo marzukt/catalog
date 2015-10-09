@@ -27,9 +27,21 @@ def showBook(book_id):
     return output
 
 # Add a book
-@app.route('/book/new/')
+@app.route('/book/new/', methods=['GET','POST'])
 def newBook():
-    return 'Page to add a new book'
+    if request.method == 'POST':
+        newBook = Book(name = request.form['name'],
+                       description = request.form['description'],
+                       cover = request.form['cover'],
+                       guttenberg_url = request.form['guttenberg_url'],
+                       amazon_url = request.form['amazon_url']
+                       )
+        session.add(newBook)
+        session.commit()
+        flash('New Book {} successfully created'.format(newBook.name))
+        return redirect(url_for('showBooks'))
+    else:
+        return render_template('addbook.html')
 
 # Edit a book
 @app.route('/book/<int:book_id>/edit/', methods=['GET','POST'])
