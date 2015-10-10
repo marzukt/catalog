@@ -82,7 +82,6 @@ def deleteBook(book_id):
 @app.route('/category/')
 def showCategories():
     categories = session.query(Category).order_by(asc(Category.name)).all()
-    print(categories)
     output = ''
     output += '<h1> Categories </h1>'
     for category in categories:
@@ -104,9 +103,20 @@ def newCategory():
         return render_template('addcategory.html')
 
 # Edit a category
-@app.route('/category/<int:category_id>/edit/')
+@app.route('/category/<int:category_id>/edit/', methods = ['GET','POST'])
 def editCategory(category_id):
-    return 'This is a page for editing the catalog with the id {}'.format(category_id)
+    editedCategory = session.query(Category).filter_by(id = category_id).one()
+    if request.method == 'POST':
+        if request.form['name']:
+            editedCategory.name = request.form['name']
+        if request.form['description']:
+            editedCategory.description = request.form['description']
+        print(editedCategory.name,editedCategory.description)
+        session.add(editedCategory)
+        session.commit()
+        return redirect(url_for('showCategories'))
+    else:
+        return render_template('editcategory.html', category = editedCategory)
 
 # Delete a category
 @app.route('/category/<int:category_id>/delete/')
