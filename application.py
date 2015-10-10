@@ -29,6 +29,7 @@ def showBook(book_id):
 # Add a book
 @app.route('/book/new/', methods=['GET','POST'])
 def newBook():
+    categories = session.query(Category).order_by(asc(Category.name)).all()
     if request.method == 'POST':
         newBook = Book(name = request.form['name'],
                        description = request.form['description'],
@@ -38,10 +39,11 @@ def newBook():
                        )
         session.add(newBook)
         session.commit()
+        addBookCategory(newBook.id, request.form.getlist('category'))
         flash('New Book {} successfully created'.format(newBook.name))
         return redirect(url_for('showBooks'))
     else:
-        return render_template('addbook.html')
+        return render_template('addbook.html', categories = categories)
 
 # Edit a book
 @app.route('/book/<int:book_id>/edit/', methods=['GET','POST'])
@@ -76,6 +78,23 @@ def deleteBook(book_id):
     else:
         return render_template('deletebook.html', book = bookToDelete)
     return 'Page to delete book'
+
+def addBookCategory(book_id,category_list):
+    """Add categories for  a book
+    """
+    # clear old categories
+    oldCategories = session.query(BookCategory).filter_by(book_id = book_id).all()
+    if oldCategories:
+        session.delete(oldCategories)
+        session.commit()
+
+    # add new categories
+    for category in category_list:
+        newBookCategory = BookCategory(book_id = book_id,
+                                       category_id = category)
+        session.add(newBookCategory)
+        session.commit()
+    return
 
 ## List all categories
 @app.route('/')
