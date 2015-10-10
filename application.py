@@ -66,8 +66,15 @@ def editBook(book_id):
         return render_template('editBook.html', book_id = book_id, book = editedBook)
 
 # Delete a book
-@app.route('/book/<int:book_id>/delete/')
+@app.route('/book/<int:book_id>/delete/', methods = ['GET','POST'])
 def deleteBook(book_id):
+    bookToDelete = session.query(Book).filter_by(id = book_id).one()
+    if request.method == 'POST':
+        session.delete(bookToDelete)
+        session.commit()
+        return redirect(url_for('showBooks'))
+    else:
+        return render_template('deletebook.html', book = bookToDelete)
     return 'Page to delete book'
 
 ## List all categories
