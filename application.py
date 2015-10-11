@@ -39,7 +39,9 @@ def newBook():
                        )
         session.add(newBook)
         session.commit()
-        addBookCategory(newBook.id, request.form.getlist('category'))
+        # uncomment to make a lack of category cause an error
+        #if request.form['category']:
+            addBookCategory(newBook.id, request.form.getlist('category'))
         flash('New Book {} successfully created'.format(newBook.name))
         return redirect(url_for('showBooks'))
     else:
@@ -49,6 +51,15 @@ def newBook():
 @app.route('/book/<int:book_id>/edit/', methods=['GET','POST'])
 def editBook(book_id):
     editedBook = session.query(Book).filter_by(id = book_id).one()
+    categories = session.query(Category).order_by(asc(Category.name)).all()
+    editedBookCategories = session.query(BookCategory).filter_by(book_id = book_id).all()
+
+    # flask template can't iterate a generator send ids as a list
+    #editedBookCategoriesIDs = (cat.category_id for cat in editedBookCategories)
+    editedBookCategoriesIDs = []
+    for cat in editedBookCategories:
+        editedBookCategoriesIDs.append(cat.category_id)
+
     if request.method == 'POST':
         if request.form['name']:
             editedBook.name = request.form['name']
@@ -62,10 +73,16 @@ def editBook(book_id):
             editedBook.amazon_url = request.form['amazon_url']
         session.add(editedBook)
         session.commit()
-        print url_for('showBooks')
+        # uncomment to make a lack of category cause an error
+        #if request.form['category']:
+        addBookCategory(editedBook.id, request.form.getlist('category'))
         return redirect(url_for('showBooks'))
     else:
-        return render_template('editBook.html', book_id = book_id, book = editedBook)
+        return render_template('editBook.html',
+                               book_id = book_id,
+                               book = editedBook,
+                               categories = categories,
+                               editedBookCategoriesIDs = editedBookCategoriesIDs)
 
 # Delete a book
 @app.route('/book/<int:book_id>/delete/', methods = ['GET','POST'])
@@ -85,7 +102,8 @@ def addBookCategory(book_id,category_list):
     # clear old categories
     oldCategories = session.query(BookCategory).filter_by(book_id = book_id).all()
     if oldCategories:
-        session.delete(oldCategories)
+        for oldCategory in oldCategories:
+            session.delete(oldCategory)
         session.commit()
 
     # add new categories
@@ -130,7 +148,6 @@ def editCategory(category_id):
             editedCategory.name = request.form['name']
         if request.form['description']:
             editedCategory.description = request.form['description']
-        print(editedCategory.name,editedCategory.description)
         session.add(editedCategory)
         session.commit()
         return redirect(url_for('showCategories'))
