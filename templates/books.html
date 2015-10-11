@@ -4,6 +4,8 @@
 		{% for i in books %}
         <h2>{{i.name}}</h2>
 			<p>{{i.description}}</p>
+			<a href="{{url_for('editBook', book_id = i.id )}}">Edit Book</a>
+			<a href="{{url_for('deleteBook', book_id = i.id )}}">Delete Book</a>
 		{% endfor %}
 	{% endif %}
 {% endblock %}
