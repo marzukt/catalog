@@ -41,7 +41,7 @@ def newBook():
         session.commit()
         # uncomment to make a lack of category cause an error
         #if request.form['category']:
-            addBookCategory(newBook.id, request.form.getlist('category'))
+        addBookCategory(newBook.id, request.form.getlist('category'))
         flash('New Book {} successfully created'.format(newBook.name))
         return redirect(url_for('showBooks'))
     else:
