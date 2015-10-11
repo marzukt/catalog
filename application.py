@@ -89,6 +89,8 @@ def editBook(book_id):
 def deleteBook(book_id):
     bookToDelete = session.query(Book).filter_by(id = book_id).one()
     if request.method == 'POST':
+        #delete category associations first
+        addBookCategory(book_id)
         session.delete(bookToDelete)
         session.commit()
         return redirect(url_for('showBooks'))
@@ -96,7 +98,7 @@ def deleteBook(book_id):
         return render_template('deletebook.html', book = bookToDelete)
     return 'Page to delete book'
 
-def addBookCategory(book_id,category_list):
+def addBookCategory(book_id,category_list=[]):
     """Add categories for  a book
     """
     # clear old categories
