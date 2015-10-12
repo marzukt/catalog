@@ -156,7 +156,7 @@ def editCategory(category_id):
 def deleteCategory(category_id):
     categoryToDelete = session.query(Category).filter_by(id = category_id).one()
     books = session.query(Book).filter(Book.id.in_(
-        session.query(BookCategory.book_id).filter_by(category_id = category_id)))
+        session.query(BookCategory.book_id).filter_by(category_id = category_id))).all()
     if request.method == 'POST':
         session.delete(categoryToDelete)
         session.commit()
