@@ -14,7 +14,12 @@
 		<input type ="text" maxlength="100" class="form-control" name="amazon_url" placeholder="amazon URL">
         <select name="category" multiple>
             {% for i in categories %}
-            <option value={{i.id}}>{{i.name}}</option>
+            <!--If inserting a book for a category preselect that category-->
+                {% if i.id == category_id %}
+                    <option selected="selected" value={{i.id}}>{{i.name}}</option>
+                {% else %}
+                    <option value={{i.id}}>{{i.name}}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <button type="submit" class="btn btn-default" id="submit" type="submit">

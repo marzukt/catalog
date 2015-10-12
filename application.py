@@ -19,9 +19,9 @@ def showBooks(category_id = None):
         books = session.query(Book).filter(Book.id.in_(session.query(BookCategory.book_id).filter_by(category_id = category_id))).all()
     else:
         books = session.query(Book).all()
-    return render_template('books.html', books = books)
+    return render_template('books.html', books = books, category_id = category_id)
 
-# Show a book
+# Show a single book
 @app.route('/book/<int:book_id>/')
 def showBook(book_id):
     book = session.query(Book).filter_by(id = book_id).one()
@@ -31,8 +31,9 @@ def showBook(book_id):
     return output
 
 # Add a book
-@app.route('/book/new/', methods=['GET','POST'])
-def newBook():
+@app.route('/books/new/', methods=['GET','POST'])
+@app.route('/category/<int:category_id>/books/new', methods=['GET','POST'])
+def newBook(category_id = None):
     categories = session.query(Category).order_by(asc(Category.name)).all()
     if request.method == 'POST':
         newBook = Book(name = request.form['name'],
@@ -49,10 +50,10 @@ def newBook():
         flash('New Book {} successfully created'.format(newBook.name))
         return redirect(url_for('showBooks'))
     else:
-        return render_template('addbook.html', categories = categories)
+        return render_template('addbook.html', categories = categories, category_id = category_id)
 
 # Edit a book
-@app.route('/book/<int:book_id>/edit/', methods=['GET','POST'])
+@app.route('/books/<int:book_id>/edit/', methods=['GET','POST'])
 def editBook(book_id):
     editedBook = session.query(Book).filter_by(id = book_id).one()
     categories = session.query(Category).order_by(asc(Category.name)).all()
@@ -89,7 +90,7 @@ def editBook(book_id):
                                editedBookCategoriesIDs = editedBookCategoriesIDs)
 
 # Delete a book
-@app.route('/book/<int:book_id>/delete/', methods = ['GET','POST'])
+@app.route('/books/<int:book_id>/delete/', methods = ['GET','POST'])
 def deleteBook(book_id):
     bookToDelete = session.query(Book).filter_by(id = book_id).one()
     if request.method == 'POST':
