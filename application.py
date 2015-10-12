@@ -11,7 +11,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-#Show all books if no category is passed otherwise just show books for that category
+#Show all books if no category is passed otherwise only show books for that category
 @app.route('/books/')
 @app.route('/category/<int:category_id>/books/')
 def showBooks(category_id = None):

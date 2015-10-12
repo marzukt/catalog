@@ -1,5 +1,6 @@
 {% extends "main.html" %}
 {% block content %}
+<a href="{{url_for('newBook', category_id = category_id)}}">Add Book</a>
 	{% if books !=[] %}	
 		{% for i in books %}
         <h2>{{i.name}}</h2>

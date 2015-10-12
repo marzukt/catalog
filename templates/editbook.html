@@ -14,6 +14,7 @@
 			<input type ="text" maxlength="100" class="form-control" name="amazon_url" value="{{book.amazon_url }}">
         <select name="category" multiple>
             {% for i in categories %}
+            <!--If the book is assigned to categories preselect those categories-->
                 {% if i.id in editedBookCategoriesIDs %}
                     <option selected="selected" value={{i.id}}>{{i.name}}</option>
                 {% else %}
