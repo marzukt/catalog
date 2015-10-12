@@ -1,0 +1,15 @@
+{% extends "main.html" %}
+{% block content %}
+	<h1>Add a new Category</h1>
+	<form action="#" method = "post">
+		<label for="name">Name:</label>
+		<input type ="text" maxlength="100" class="form-control" name="name" placeholder="Name of Book">
+		<label for="description">Description:</label>
+		<textarea class="form-control" maxlength="250" rows="3" name="description" placeholder="Description of the Book"></textarea>
+		<button type="submit" class="btn btn-default" id="submit" type="submit">
+		<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>Save</button>
+		<a href = '{{url_for('showBooks')}}'>
+            <button type="button">Cancel</button>
+        </a>
+	</form>
+{% endblock %}

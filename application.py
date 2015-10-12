@@ -121,12 +121,7 @@ def addBookCategory(book_id,category_list=[]):
 @app.route('/category/')
 def showCategories():
     categories = session.query(Category).order_by(asc(Category.name)).all()
-    output = ''
-    output += '<h1> Categories </h1>'
-    for category in categories:
-        output += category.name
-        output += '</br>'
-    return output
+    return render_template('categories.html', categories = categories)
 
 @app.route('/category/new/', methods = ['GET', 'POST'])
 def newCategory():
@@ -160,12 +155,14 @@ def editCategory(category_id):
 @app.route('/category/<int:category_id>/delete/', methods = ['GET','POST'])
 def deleteCategory(category_id):
     categoryToDelete = session.query(Category).filter_by(id = category_id).one()
+    books = session.query(Book).filter(Book.id.in_(
+        session.query(BookCategory.book_id).filter_by(category_id = category_id)))
     if request.method == 'POST':
         session.delete(categoryToDelete)
         session.commit()
         return redirect(url_for('showCategories'))
     else:
-        return render_template('deletecategory.html', category = categoryToDelete)
+        return render_template('deletecategory.html', category = categoryToDelete, books = books)
 
 # Test page
 @app.route('/test/')
