@@ -11,6 +11,27 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+# JSON APIS
+#return whole catalog
+@app.route('/catalog/JSON')
+def catalogJSON():
+    categories = session.query(Category).order_by(asc(Category.name)).all()
+    catlist = []
+    catbook = {}
+    for category in categories:
+        print category.name
+        books = session.query(Book).filter(Book.id.in_(session.query(
+            BookCategory.book_id).filter_by(category_id = category.id))).all()
+        catbook = category.serialize
+        catbook['Books'] = [book.serialize for book in books]
+        catlist.append(catbook)
+    return jsonify(Categories = catlist)
+
+@app.route('/books/<int:book_id>/JSON')
+def bookJSON():
+    book = session.query(Book).filter_by(id = book_id).one()
+    return jsonify(Book = book.serialize)
+
 #Show all books if no category is passed otherwise only show books for that category
 @app.route('/books/')
 @app.route('/category/<int:category_id>/books/')

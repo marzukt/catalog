@@ -22,6 +22,14 @@ class Category(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
 
+    @property
+    def serialize(self):
+        return {
+            'id'        :self.id,
+            'name'      :self.name,
+            'desc'      :self.description,
+        }
+
 class Book(Base):
     __tablename__ = 'book'
 
@@ -39,8 +47,8 @@ class Book(Base):
         return {
             'id'        :self.id,
             'name'      :self.name,
-            'desc'      :self.desc,
-            'cover'     :self.cover_url,
+            'desc'      :self.description,
+            'cover'     :self.cover,
         }
 
 class Author(Base):
