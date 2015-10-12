@@ -11,10 +11,14 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-#Show all books
-@app.route('/book/')
-def showBooks():
-    books = session.query(Book).all()
+#Show all books if no category is passed otherwise just show books for that category
+@app.route('/books/')
+@app.route('/category/<int:category_id>/books/')
+def showBooks(category_id = None):
+    if category_id:
+        books = session.query(Book).filter(Book.id.in_(session.query(BookCategory.book_id).filter_by(category_id = category_id))).all()
+    else:
+        books = session.query(Book).all()
     return render_template('books.html', books = books)
 
 # Show a book
