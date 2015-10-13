@@ -12,6 +12,13 @@
 		<input type ="text" maxlength="100" class="form-control" name="guttenberg_url" placeholder="URL for guttenberg text">
 		<label for="name">Amazon link:</label>
 		<input type ="text" maxlength="100" class="form-control" name="amazon_url" placeholder="amazon URL">
+        <label for="public">Make book public:</label>
+        <div class="radio">
+          <label>
+            <input type="radio" name="public" value=True checked="checked">Yes</input>
+            <input type="radio" name="public" value=False>No</input>
+          </label>
+        </div>
         <select name="category" multiple>
             {% for i in categories %}
             <!--If inserting a book for a category preselect that category-->
