@@ -12,7 +12,11 @@
 			<input type ="text" maxlength="100" class="form-control" name="guttenberg_url" value="{{book.guttenberg_url }}">
 			<label for="name">Amazon link:</label>
 			<input type ="text" maxlength="100" class="form-control" name="amazon_url" value="{{book.amazon_url }}">
-        <input type="checkbox" name="public" checked> Make book public</br>  
+            {% if book.public %}
+                <input type="checkbox" name="public" checked> Make book public</br>  
+            {% else %}
+                <input type="checkbox" name="public"> Make book public</br>  
+            {% endif %}
         <select name="category" multiple>
             {% for i in categories %}
             <!--If the book is assigned to categories preselect those categories-->
