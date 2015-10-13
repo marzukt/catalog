@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, jsonify, url_for, f
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 # import schema from database_setup
-from database_setup import Base, User, Book, Category, BookCategory, Author
+from database_setup import Base, User, Book, Category, BookCategory
 # imports for session creation to track state
 from flask import session as login_session
 # use random and string to generate state token
@@ -231,9 +231,11 @@ def showBooks(category_id = None):
             books = session.query(Book) \
                 .filter_by(Book.public == True ) \
                 .filter(Book.id.in_(session.query(BookCategory.book_id) \
-                                    .filter_by(category_id = category_id))).all()
+                                    .filter_by(category_id = category_id))) \
+                .order_by(asc(Book.name)).all()
         else:
-            books = session.query(Book).filter_by(Book.public == True).all()
+            books = session.query(Book).filter_by(Book.public == True) \
+                .order_by(asc(Book.name)).all()
         return render_template('books.html', books = books, category_id = category_id)
 
     # if the user is logged in show their private books as well
@@ -242,11 +244,16 @@ def showBooks(category_id = None):
             books = session.query(Book) \
                 .filter((Book.public == True) | (Book.user_id == login_session['user_id']) ) \
                 .filter(Book.id.in_(session.query(BookCategory.book_id) \
-                                    .filter_by(category_id = category_id))).all()
+                                    .filter_by(category_id = category_id))) \
+                .order_by(asc(Book.name)).all()
         else:
             books = session.query(Book) \
-                .filter((Book.public == True) | (Book.user_id == login_session['user_id'])).all()
-        return render_template('books.html', books = books, category_id = category_id)
+                .filter((Book.public == True) | (Book.user_id == login_session['user_id'])) \
+                .order_by(asc(Book.name)).all()
+        return render_template('books.html',
+                               books = books,
+                               category_id = category_id,
+                               user_id = login_session['user_id'])
 
 # Show a single book
 @app.route('/book/<int:book_id>/')
@@ -264,7 +271,6 @@ def newBook(category_id = None):
     # if not logged in redirect to login page before user can see form
     if 'username' not in login_session:
         return redirect('/login')
-
     # public categories and user's own categories if they exist
     categories = session.query(Category) \
         .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
@@ -381,7 +387,10 @@ def addBookCategory(book_id,category_list=[]):
 @app.route('/')
 @app.route('/category/')
 def showCategories():
-    categories = session.query(Category).order_by(asc(Category.name)).all()
+    #categories = session.query(Category).order_by(asc(Category.name)).all()
+    categories = session.query(Category) \
+        .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
+        .order_by(asc(Category.name)).all()
     return render_template('categories.html', categories = categories)
 
 @app.route('/category/new/', methods = ['GET', 'POST'])
