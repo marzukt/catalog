@@ -226,8 +226,6 @@ def showBooks(category_id = None):
     # If a category is provided only return books for that category
     # otherwise return all books available to user
     # if user is not logged in only show public books
-    if category_id and 'username' not in login_session:
-        return
     if 'username' not in login_session:
         if category_id:
             books = session.query(Book) \
@@ -267,10 +265,10 @@ def newBook(category_id = None):
     if 'username' not in login_session:
         return redirect('/login')
 
-    user_id = login_session['user_id']
     # public categories and user's own categories if they exist
     categories = session.query(Category) \
-        .filter((Category.user_id == user_id) | (Category.user_id == None)).order_by(asc(Category.name)).all()
+        .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
+        .order_by(asc(Category.name)).all()
     if request.method == 'POST':
         # Process checkbox to boolean
         # if unchecked it will not be in the returned form
@@ -300,14 +298,16 @@ def editBook(book_id):
     if 'username' not in login_session:
         return redirect('/login')
     editedBook = session.query(Book).filter_by(id = book_id).one()
-    #Only the creator can edit a book unless it is public
-    if not editedBook.public and login_session['user_id'] != editedBook.user_id:
+    # Only the creator can edit a book
+    if login_session['user_id'] != editedBook.user_id:
         return "<script>function myFunction() {alert('You are not authorized to edit this book.');}</script><body onload='myFunction()''>"
-
-    categories = session.query(Category).order_by(asc(Category.name)).all()
+    #categories = session.query(Category).order_by(asc(Category.name)).all()
+    categories = session.query(Category) \
+        .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
+        .order_by(asc(Category.name)).all()
     editedBookCategories = session.query(BookCategory).filter_by(book_id = book_id).all()
     # flask template can't iterate a generator send ids as a list
-    #editedBookCategoriesIDs = (cat.category_id for cat in editedBookCategories)
+    # editedBookCategoriesIDs = (cat.category_id for cat in editedBookCategories)
     editedBookCategoriesIDs = []
     for cat in editedBookCategories:
         editedBookCategoriesIDs.append(cat.category_id)
@@ -323,12 +323,12 @@ def editBook(book_id):
             editedBook.guttenberg_url = request.form['guttenberg_url']
         if request.form['amazon_url']:
             editedBook.amazon_url = request.form['amazon_url']
-        if request.form['public']:
-            editedBook.public = request.form['public']
+        public = 'public' in request.form
+        editedBook.public = public
         session.add(editedBook)
         session.commit()
-        # uncomment to make a lack of category cause an error
-        #if request.form['category']:
+        # modify the books categories
+        # if form list is empty only clean up old ones
         addBookCategory(editedBook.id, request.form.getlist('category'))
         flash('Book {} sucessfully edited'.format(editedBook.name))
         return redirect(url_for('showBooks'))
@@ -336,7 +336,6 @@ def editBook(book_id):
         return render_template('editBook.html',
                                book_id = book_id,
                                book = editedBook,
-                               user_id = login_session['user_id'],
                                categories = categories,
                                editedBookCategoriesIDs = editedBookCategoriesIDs)
 
@@ -348,9 +347,10 @@ def deleteBook(book_id):
     bookToDelete = session.query(Book).filter_by(id = book_id).one()
     #only a book's creator can remove it
     if bookToDelete.user_id != login_session['user_id']:
-        return "<script>function myFunction() {alert('You are not authorized to delete this book.);}</script><body onload='myFunction()''>"
+        return "<script>function myFunction() {alert('You are not authorized to delete this book.');}</script><body onload='myFunction()''>"
     if request.method == 'POST':
-        #delete category associations first
+        # delete category associations first
+        # change model to use cascade to do this automatically on deletion of book
         addBookCategory(book_id)
         session.delete(bookToDelete)
         session.commit()
