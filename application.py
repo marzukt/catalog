@@ -45,6 +45,11 @@ def catalogJSON():
         catlist.append(catbook)
     return jsonify(Categories = catlist)
 
+@app.route('/books/<int:book_id>/JSON')
+def bookJSON():
+    book = session.query(Book).filter_by(id = book_id).one()
+    return jsonify(Book = book.serialize)
+
 # Create state token
 @app.route('/login')
 def showLogin():
@@ -54,11 +59,6 @@ def showLogin():
     state = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for x in xrange(32))
     login_session['state'] = state
     return render_template('login.html', STATE=state)
-
-@app.route('/books/<int:book_id>/JSON')
-def bookJSON():
-    book = session.query(Book).filter_by(id = book_id).one()
-    return jsonify(Book = book.serialize)
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -199,14 +199,12 @@ def gdisconnect():
 
 
 def createUser(login_session):
-    print "enterd createUser"
     newUser = User(name=login_session['username'],
                    email=login_session['email'],
                    picture=login_session['picture'])
     session.add(newUser)
     session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()
-    print "created user with id {}".format(user.id)
     return user.id
 
 def getUserInfo(user_id):
@@ -226,7 +224,10 @@ def getUserID(email):
 @app.route('/category/<int:category_id>/books/')
 def showBooks(category_id = None):
     # If a category is provided only return books for that category
-    # otherwise return all books
+    # otherwise return all books available to user
+    # if user is not logged in only show public books
+    if category_id and 'username' not in login_session:
+        return
     if 'username' not in login_session:
         if category_id:
             books = session.query(Book) \
@@ -237,6 +238,7 @@ def showBooks(category_id = None):
             books = session.query(Book).filter_by(Book.public == True).all()
         return render_template('books.html', books = books, category_id = category_id)
 
+    # if the user is logged in show their private books as well
     else:
         if category_id:
             books = session.query(Book) \
@@ -261,16 +263,24 @@ def showBook(book_id):
 @app.route('/books/new/', methods=['GET','POST'])
 @app.route('/category/<int:category_id>/books/new', methods=['GET','POST'])
 def newBook(category_id = None):
+    # if not logged in redirect to login page before user can see form
     if 'username' not in login_session:
         return redirect('/login')
 
-    categories = session.query(Category).order_by(asc(Category.name)).all()
+    user_id = login_session['user_id']
+    # public categories and user's own categories if they exist
+    categories = session.query(Category) \
+        .filter((Category.user_id == user_id) | (Category.user_id == None)).order_by(asc(Category.name)).all()
     if request.method == 'POST':
+        # Process checkbox to boolean
+        # if unchecked it will not be in the returned form
+        public = 'public' in request.form
         newBook = Book(name = request.form['name'],
                        description = request.form['description'],
                        cover = request.form['cover'],
                        guttenberg_url = request.form['guttenberg_url'],
                        amazon_url = request.form['amazon_url'],
+                       public = public,
                        user_id = login_session['user_id']
                        )
         session.add(newBook)
@@ -313,6 +323,8 @@ def editBook(book_id):
             editedBook.guttenberg_url = request.form['guttenberg_url']
         if request.form['amazon_url']:
             editedBook.amazon_url = request.form['amazon_url']
+        if request.form['public']:
+            editedBook.public = request.form['public']
         session.add(editedBook)
         session.commit()
         # uncomment to make a lack of category cause an error
@@ -324,6 +336,7 @@ def editBook(book_id):
         return render_template('editBook.html',
                                book_id = book_id,
                                book = editedBook,
+                               user_id = login_session['user_id'],
                                categories = categories,
                                editedBookCategoriesIDs = editedBookCategoriesIDs)
 
@@ -394,7 +407,7 @@ def editCategory(category_id):
         return redirect('/login')
     editedCategory = session.query(Category).filter_by(id = category_id).one()
     if login_session['user_id'] != editedCategory.user_id:
-        return "<script>function myFunction() {alert('You are not authorized to delete this category.);}</script><body onload='myFunction()''>"
+        return "<script>function myFunction() {alert('You are not authorized to edit this category.');}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         if request.form['name']:
             editedCategory.name = request.form['name']
@@ -413,7 +426,7 @@ def deleteCategory(category_id):
         return redirect('/login')
     categoryToDelete = session.query(Category).filter_by(id = category_id).one()
     if login_session['user_id'] != categoryToDelete.user_id:
-        return "<script>function myFunction() {alert('You are not authorized to delete this category.);}</script><body onload='myFunction()''>"
+        return "<script>function myFunction() {alert('You are not authorized to delete this category.');}</script><body onload='myFunction()''>"
     books = session.query(Book).filter(Book.id.in_(
         session.query(BookCategory.book_id).filter_by(category_id = category_id))).all()
     if request.method == 'POST':
