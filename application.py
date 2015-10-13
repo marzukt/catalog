@@ -5,6 +5,28 @@ from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Book, Category, BookCategory, Author
 
 app = Flask(__name__)
+
+# imports for session creation to track state
+from flask import session as login_session
+# use random and string to generate state token
+import random, string
+
+#for creating a flow object from client secrets json file
+from oauth2client.client import flow_from_clientsecrets
+#for catching flow exchange errors
+from oauth2client.client import FlowExchangeError
+import httplib2
+import json
+#for creating response object to send to client
+from flask import make_response
+import requests
+
+app = Flask(__name__)
+#load client secrets file
+CLIENT_ID = json.loads(
+    open('client_secrets.json', 'r').read())['web']['client_id']
+
+
 # Connect to a database and create a database session
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.bind = engine
@@ -27,15 +49,161 @@ def catalogJSON():
         catlist.append(catbook)
     return jsonify(Categories = catlist)
 
+
+# Create state token
+@app.route('/login')
+def showLogin():
+    #create state token to prevent request forgery
+    # use systemRandom().choice as it is more secure
+    # https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python
+    state = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+    login_session['state'] = state
+    return render_template('login.html', STATE=state)
+
 @app.route('/books/<int:book_id>/JSON')
 def bookJSON():
     book = session.query(Book).filter_by(id = book_id).one()
     return jsonify(Book = book.serialize)
 
+@app.route('/gconnect', methods=['POST'])
+def gconnect():
+    # validate state token  against the state token server provided
+    # this confirms its the actual client
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Store one time authorisation code
+    code = request.data
+
+    try:
+        # Upgrade the authorisation code into a credentials object
+        #Create an oauth flow object using info from client secrets
+        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
+        oauth_flow.redirect_uri = 'postmessage'
+        #Exchange the one time code for a credentials object
+        credentials = oauth_flow.step2_exchange(code)
+
+    except FlowExchangeError:
+        response = make_response(
+            json.dumps('Failed to upgrade the authorisation code.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    #  If the token comes back check that the access token is valid
+    access_token = credentials.access_token
+    # use google api server to verify token
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={}'.format(access_token))
+    h = httplib2.Http()
+    result = json.loads(h.request(url, 'GET')[1])
+
+    #If there was an error in the access toke info: abort
+    if result.get('error') is not None:
+        response = make_response(json.dumps(result.get('error')), 500)
+        response.headers['Content-type'] = 'application/json'
+
+    # Verify that the access token is for the intended user
+    gplus_id = credentials.id_token['sub']
+    if result['user_id'] != gplus_id:
+        response = make_response(
+            json.dumps("Token's user ID doesn't match given user ID."), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Verify that the access token is valid for this app
+    if result['issued_to'] != CLIENT_ID:
+        response = make_response(
+            json.dumps("Token's client ID does not match app's."), 401)
+        response.headers
+        return response
+
+    # check if the user is already logged in
+    stored_credentials = login_session.get('credentials')
+    stored_gplus_id = login_session.get('gplus_id')
+    if stored_credentials is not None and gplus_id == stored_gplus_id:
+        print 'user already connected'
+        response = make_response(json.dumps('Current user is already connected.'),
+                                            200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # store the access token in the session for later use
+    login_session['credentials'] = credentials.access_token
+    login_session['gplus_id'] = gplus_id
+
+    # get user info the user has just authorised google to provide you
+    userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
+    params = {'access_token': credentials.access_token, 'alt': 'json'}
+    answer = requests.get(userinfo_url, params=params)
+
+    data = answer.json()
+
+    login_session['username'] = data['name']
+    login_session['picture'] = data['picture']
+    login_session['email'] = data ['email']
+
+    # see if the user exists, if it doesn't make a new one
+
+    #user_id = getUserID(login_session['email'])
+    #if  not user_id:
+        #user_id = createUser(login_session)
+    #login_session['user_id']= user_id
+    output = ''
+    output += '<h1>Welcome,'
+    output += login_session['username']
+    output += '!</h1>'
+    output += '<img src="'
+    output += login_session['picture']
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    flash("You are now logged in as {}".format(login_session['username']))
+    return output
+
+
+@app.route('/gdisconnect/')
+def gdisconnect():
+    #only disconnect a connected user
+    print "disconnect entere"
+    credentials = login_session.get('credentials')
+    if credentials is None:
+        response = make_response(
+        json.dumps('Current user not connected.'),401)
+        return response
+    print credentials
+    access_token = credentials
+    url = 'https://accounts.google.com/o/oauth2/revoke?token={}'.format(access_token)
+    print url
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[0]
+
+    if result['status'] == '200':
+        print "entered ggisconnect restet"
+        # reset the user session
+        del login_session['credentials']
+        del login_session['gplus_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['picture']
+        #del login_session['user_id']
+
+        response = make_response(json.dumps('Successfully disconnected.'), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    else:
+        # token was invalid
+        response = make_response(
+            json.dumps('Failed to revoke token for given user.'), 400)
+        response.headers['Content-Type']  = 'application/json'
+        return response
+
+
 #Show all books if no category is passed otherwise only show books for that category
 @app.route('/books/')
 @app.route('/category/<int:category_id>/books/')
 def showBooks(category_id = None):
+    # If a category is provided only return books for that category
+    # otherwise return all books
     if category_id:
         books = session.query(Book).filter(Book.id.in_(session.query(BookCategory.book_id).filter_by(category_id = category_id))).all()
     else:
