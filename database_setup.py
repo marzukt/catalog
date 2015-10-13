@@ -39,6 +39,7 @@ class Book(Base):
     cover = Column(String(250))
     guttenberg_url = Column(String(250))
     amazon_url = Column(String(250))
+    public = Column(Boolean, default = True)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
 
