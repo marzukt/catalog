@@ -3,9 +3,6 @@ from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 # import schema from database_setup
 from database_setup import Base, User, Book, Category, BookCategory, Author
-
-app = Flask(__name__)
-
 # imports for session creation to track state
 from flask import session as login_session
 # use random and string to generate state token
@@ -25,7 +22,6 @@ app = Flask(__name__)
 #load client secrets file
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
-
 
 # Connect to a database and create a database session
 engine = create_engine('sqlite:///catalog.db')
@@ -48,7 +44,6 @@ def catalogJSON():
         catbook['Books'] = [book.serialize for book in books]
         catlist.append(catbook)
     return jsonify(Categories = catlist)
-
 
 # Create state token
 @app.route('/login')
@@ -130,7 +125,9 @@ def gconnect():
 
     # store the access token in the session for later use
     login_session['credentials'] = credentials.access_token
+    print  credentials.access_token
     login_session['gplus_id'] = gplus_id
+    print "gplus_id {}".format(gplus_id)
 
     # get user info the user has just authorised google to provide you
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
@@ -141,14 +138,17 @@ def gconnect():
 
     login_session['username'] = data['name']
     login_session['picture'] = data['picture']
-    login_session['email'] = data ['email']
+    login_session['email'] = data['email']
 
     # see if the user exists, if it doesn't make a new one
 
-    #user_id = getUserID(login_session['email'])
-    #if  not user_id:
-        #user_id = createUser(login_session)
-    #login_session['user_id']= user_id
+    user_id = getUserID(login_session['email'])
+    print('user id = {}'.format(user_id))
+    if  not user_id:
+        print 'creating user'
+        user_id = createUser(login_session)
+        print ('after create returned user_id {}'.format(user_id))
+    login_session['user_id']= user_id
     output = ''
     output += '<h1>Welcome,'
     output += login_session['username']
@@ -159,11 +159,11 @@ def gconnect():
     flash("You are now logged in as {}".format(login_session['username']))
     return output
 
-
 @app.route('/gdisconnect/')
 def gdisconnect():
     #only disconnect a connected user
     print "disconnect entere"
+    #print login_session['gplus_id']
     credentials = login_session.get('credentials')
     if credentials is None:
         response = make_response(
@@ -198,17 +198,55 @@ def gdisconnect():
         return response
 
 
+def createUser(login_session):
+    print "enterd createUser"
+    newUser = User(name=login_session['username'],
+                   email=login_session['email'],
+                   picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    print "created user with id {}".format(user.id)
+    return user.id
+
+def getUserInfo(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
+
+
 #Show all books if no category is passed otherwise only show books for that category
 @app.route('/books/')
 @app.route('/category/<int:category_id>/books/')
 def showBooks(category_id = None):
     # If a category is provided only return books for that category
     # otherwise return all books
-    if category_id:
-        books = session.query(Book).filter(Book.id.in_(session.query(BookCategory.book_id).filter_by(category_id = category_id))).all()
+    if 'username' not in login_session:
+        if category_id:
+            books = session.query(Book) \
+                .filter_by(Book.public == True ) \
+                .filter(Book.id.in_(session.query(BookCategory.book_id) \
+                                    .filter_by(category_id = category_id))).all()
+        else:
+            books = session.query(Book).filter_by(Book.public == True).all()
+        return render_template('books.html', books = books, category_id = category_id)
+
     else:
-        books = session.query(Book).all()
-    return render_template('books.html', books = books, category_id = category_id)
+        if category_id:
+            books = session.query(Book) \
+                .filter((Book.public == True) | (Book.user_id == login_session['user_id']) ) \
+                .filter(Book.id.in_(session.query(BookCategory.book_id) \
+                                    .filter_by(category_id = category_id))).all()
+        else:
+            books = session.query(Book) \
+                .filter((Book.public == True) | (Book.user_id == login_session['user_id'])).all()
+        return render_template('books.html', books = books, category_id = category_id)
 
 # Show a single book
 @app.route('/book/<int:book_id>/')
@@ -223,13 +261,17 @@ def showBook(book_id):
 @app.route('/books/new/', methods=['GET','POST'])
 @app.route('/category/<int:category_id>/books/new', methods=['GET','POST'])
 def newBook(category_id = None):
+    if 'username' not in login_session:
+        return redirect('/login')
+
     categories = session.query(Category).order_by(asc(Category.name)).all()
     if request.method == 'POST':
         newBook = Book(name = request.form['name'],
                        description = request.form['description'],
                        cover = request.form['cover'],
                        guttenberg_url = request.form['guttenberg_url'],
-                       amazon_url = request.form['amazon_url']
+                       amazon_url = request.form['amazon_url'],
+                       user_id = login_session['user_id']
                        )
         session.add(newBook)
         session.commit()
@@ -244,10 +286,16 @@ def newBook(category_id = None):
 # Edit a book
 @app.route('/books/<int:book_id>/edit/', methods=['GET','POST'])
 def editBook(book_id):
+    # if the user is not logged in redirect to the login page
+    if 'username' not in login_session:
+        return redirect('/login')
     editedBook = session.query(Book).filter_by(id = book_id).one()
+    #Only the creator can edit a book unless it is public
+    if not editedBook.public and login_session['user_id'] != editedBook.user_id:
+        return "<script>function myFunction() {alert('You are not authorized to edit this book.');}</script><body onload='myFunction()''>"
+
     categories = session.query(Category).order_by(asc(Category.name)).all()
     editedBookCategories = session.query(BookCategory).filter_by(book_id = book_id).all()
-
     # flask template can't iterate a generator send ids as a list
     #editedBookCategoriesIDs = (cat.category_id for cat in editedBookCategories)
     editedBookCategoriesIDs = []
@@ -270,6 +318,7 @@ def editBook(book_id):
         # uncomment to make a lack of category cause an error
         #if request.form['category']:
         addBookCategory(editedBook.id, request.form.getlist('category'))
+        flash('Book {} sucessfully edited'.format(editedBook.name))
         return redirect(url_for('showBooks'))
     else:
         return render_template('editBook.html',
@@ -281,7 +330,12 @@ def editBook(book_id):
 # Delete a book
 @app.route('/books/<int:book_id>/delete/', methods = ['GET','POST'])
 def deleteBook(book_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     bookToDelete = session.query(Book).filter_by(id = book_id).one()
+    #only a book's creator can remove it
+    if bookToDelete.user_id != login_session['user_id']:
+        return "<script>function myFunction() {alert('You are not authorized to delete this book.);}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         #delete category associations first
         addBookCategory(book_id)
@@ -319,9 +373,12 @@ def showCategories():
 
 @app.route('/category/new/', methods = ['GET', 'POST'])
 def newCategory():
+    if 'username' not in login_session:
+        return redirect('/login')
     if request.method == 'POST':
         newCategory = Category(name = request.form['name'],
-                       description = request.form['description']
+                       description = request.form['description'],
+                        user_id = login_session['user_id']
                        )
         session.add(newCategory)
         session.commit()
@@ -333,7 +390,11 @@ def newCategory():
 # Edit a category
 @app.route('/category/<int:category_id>/edit/', methods = ['GET','POST'])
 def editCategory(category_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     editedCategory = session.query(Category).filter_by(id = category_id).one()
+    if login_session['user_id'] != editedCategory.user_id:
+        return "<script>function myFunction() {alert('You are not authorized to delete this category.);}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         if request.form['name']:
             editedCategory.name = request.form['name']
@@ -348,7 +409,11 @@ def editCategory(category_id):
 # Delete a category
 @app.route('/category/<int:category_id>/delete/', methods = ['GET','POST'])
 def deleteCategory(category_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     categoryToDelete = session.query(Category).filter_by(id = category_id).one()
+    if login_session['user_id'] != categoryToDelete.user_id:
+        return "<script>function myFunction() {alert('You are not authorized to delete this category.);}</script><body onload='myFunction()''>"
     books = session.query(Book).filter(Book.id.in_(
         session.query(BookCategory.book_id).filter_by(category_id = category_id))).all()
     if request.method == 'POST':
