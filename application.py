@@ -241,7 +241,12 @@ def showBooks(category_id = None):
             books = session.query(Book).filter(Book.public == True) \
                 .order_by(asc(Book.name)).all()
 
+        return render_template('books.html',
+                               books = books,
+                               category_id = category_id,
+                               categories = categories,
     # if the user is logged in show their private books as well
+                               )
     else:
         if category_id:
             books = session.query(Book) \
@@ -253,7 +258,7 @@ def showBooks(category_id = None):
             books = session.query(Book) \
                 .filter((Book.public == True) | (Book.user_id == login_session['user_id'])) \
                 .order_by(asc(Book.name)).all()
-    return render_template('books.html',
+        return render_template('books.html',
                                books = books,
                                category_id = category_id,
                                categories = categories,
