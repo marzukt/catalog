@@ -309,7 +309,8 @@ def newBook(category_id = None):
 
 # Edit a book
 @app.route('/books/<int:book_id>/edit/', methods=['GET','POST'])
-def editBook(book_id):
+@app.route('/category/<int:category_id>/books/<int:book_id>/edit/', methods=['GET','POST'])
+def editBook(book_id,category_id = None):
     # if the user is not logged in redirect to the login page
     if 'username' not in login_session:
         return redirect('/login')
@@ -347,12 +348,13 @@ def editBook(book_id):
         # if form list is empty only clean up old ones
         addBookCategory(editedBook.id, request.form.getlist('category'))
         flash('Book {} sucessfully edited'.format(editedBook.name))
-        return redirect(url_for('showBooks'))
+        return redirect(url_for('showBooks', category_id = category_id))
     else:
         return render_template('editBook.html',
                                book_id = book_id,
                                book = editedBook,
                                categories = categories,
+                               category_id = category_id,
                                editedBookCategoriesIDs = editedBookCategoriesIDs)
 
 # Delete a book

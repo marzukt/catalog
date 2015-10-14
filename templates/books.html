@@ -23,7 +23,8 @@
 <div class="row-fluid">
 	{% if books !=[] %}	
 		{% for i in books %}
-        <div class="row">
+        <!--<div class="row">-->
+            <div class="col-md-4-6 col-lg-4">
         <div class="col-md-3"
             <img class="img-responsive" src={{i.cover}} alt="cover">
         </div>
@@ -32,11 +33,12 @@
         <h2>{{i.name}}</h2>
 			<p>{{i.description}}</p>
             {% if user_id == i.user_id and user_id %}
-                <a href="{{url_for('editBook', book_id = i.id )}}">Edit Book</a>
+                <a href="{{url_for('editBook', book_id = i.id , category_id = category_id)}}">Edit Book</a>
                 <a href="{{url_for('deleteBook', book_id = i.id )}}">Delete Book</a>
             {% endif %}
         </div>
-        </div>
+            </div>
+        <!--</div>-->
 		{% endfor %}
 	{% endif %}
 </div>
