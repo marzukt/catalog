@@ -46,7 +46,7 @@ def catalogJSON():
     return jsonify(Categories = catlist)
 
 @app.route('/books/<int:book_id>/JSON')
-def bookJSON():
+def bookJSON(book_id):
     book = session.query(Book).filter_by(id = book_id).one()
     return jsonify(Book = book.serialize)
 
@@ -388,9 +388,16 @@ def addBookCategory(book_id,category_list=[]):
 @app.route('/category/')
 def showCategories():
     #categories = session.query(Category).order_by(asc(Category.name)).all()
-    categories = session.query(Category) \
-        .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
-        .order_by(asc(Category.name)).all()
+    # If the user is logged in show their custom categories
+    if 'username' in login_session:
+        categories = session.query(Category) \
+            .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
+            .order_by(asc(Category.name)).all()
+    # otherwise just show the public ones
+    else:
+        categories = session.query(Category) \
+            .filter(Category.user_id == None) \
+            .order_by(asc(Category.name)).all()
     return render_template('categories.html', categories = categories)
 
 @app.route('/category/new/', methods = ['GET', 'POST'])
