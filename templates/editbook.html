@@ -1,10 +1,17 @@
 {% extends "main.html" %}
 {% block content %}
-<div class="row divider orange">
+<div class="row divider">
     <div class="col-md-12"></div>
 </div>
+<div class="row banner-menu">
+    <div class="col-md-11 col-md-offset-1 padding none"
 	<h1>Edit Book</h1>
-		<form action="#" method = "post">
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <form class="form-horizontal" action="{{ url_for('editBook', book_id = book_id) }}" method = "post">
+            <div class="form-group">
 			<label for="name">Name:</label>
 			<input type ="text" maxlength="100" class="form-control" name="name" value="{{book.name }}">
 			<label for="description">Description:</label>
@@ -15,12 +22,19 @@
 			<input type ="text" maxlength="100" class="form-control" name="guttenberg_url" value="{{book.guttenberg_url }}">
 			<label for="name">Amazon link:</label>
 			<input type ="text" maxlength="100" class="form-control" name="amazon_url" value="{{book.amazon_url }}">
+        <div class="checkbox">
+            <label>
             {% if book.public %}
-                <input type="checkbox" name="public" checked> Make book public</br>  
+                <input type="checkbox" name="public" checked> Make book public
             {% else %}
-                <input type="checkbox" name="public"> Make book public</br>  
+                <input type="checkbox" name="public"> Make book public
             {% endif %}
-        <select name="category" multiple>
+            </label>
+            </div>
+            <div class="form-group">
+        <label class="col-sm-2 control-label">Categories</label>
+        <div class="col-sm-5">
+        <select name="category" multiple class="form-control">
             {% for i in categories %}
             <!--If the book is assigned to categories preselect those categories-->
                 {% if i.id in editedBookCategoriesIDs %}
@@ -29,11 +43,18 @@
                     <option value={{i.id}}>{{i.name}}</option>
                 {% endif %}
             {% endfor %}
-        </select>
-			<button type="submit" class="btn btn-default" id="submit" type="submit">
+            </select>
+            </div>
+            </div>
+            <div class="form-group">
+			<button type="submit" class="btn btn-default" id="submit">
 			<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>Save</button>
 			<a href = '{{url_for('showBooks')}}'>
-				<button type="button" class="btn btn-default">Cancel</button>
+                <button type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-remove" aria-hidden="true">Cancel</button>
 			</a>
+            </div>
 		</form>
+    </div>
+</div>
 {% endblock %}
