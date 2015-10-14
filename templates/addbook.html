@@ -1,7 +1,7 @@
 {% extends "main.html" %}
 {% block content %}
 	<h1>Add a new Book</h1>
-	<form action="#" method = "post">
+    <form class="form-horizontal" action="{{ url_for('newBook',category_id = category_id)}}" method = "post">
 		<label for="name">Name:</label>
 		<input type ="text" maxlength="100" class="form-control" name="name" placeholder="Name of Book">
 		<label for="description">Description:</label>
@@ -12,8 +12,15 @@
 		<input type ="text" maxlength="100" class="form-control" name="guttenberg_url" placeholder="URL for guttenberg text">
 		<label for="name">Amazon link:</label>
 		<input type ="text" maxlength="100" class="form-control" name="amazon_url" placeholder="amazon URL">
-        <input type="checkbox" name="public" checked> Make book public</br>  
-        <select name="category" multiple>
+        <div class="checkbox">
+            <label>
+            <input type="checkbox" name="public" checked> Make book public  
+            </label>
+        </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Categories</label>
+        <div class="col-sm-5">
+        <select name="category" multiple class="form-control">
             {% for i in categories %}
             <!--If inserting a book for a category preselect that category-->
                 {% if i.id == category_id %}
@@ -23,10 +30,15 @@
                 {% endif %}
             {% endfor %}
         </select>
-        <button type="submit" class="btn btn-default" id="submit" type="submit">
+            </div>
+            </div>
+            <div class="form-group">
+        <button type="submit" class="btn btn-default" id="submit">
 		<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>Save</button>
 		<a href = '{{url_for('showBooks')}}'>
-			<button type="button">Cancel</button>
+			<button type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-remove" aria-hidden="true">Cancel</button>
 		</a>
+            </div>
 	</form>
 {% endblock %}
