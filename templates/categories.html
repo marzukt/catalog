@@ -1,11 +1,16 @@
 {% extends "main.html" %}
 {% block content %}
-	{% if categories !=[] %}	
-		{% for category in categories %}
+    <a href="{{ url_for('newCategory') }}">
+            <button class="btn btn-default" id="new-book">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Add User Category
+            </button>
+            </a>
+	{% if userCategories !=[] %}	
+		{% for category in userCategories %}
         <h2>{{category.name}}</h2>
 			<p>{{category.description}}</p>
-			<a href="{{url_for('editCategory', category_id = category.id )}}">Edit</a>
-			<a href="{{url_for('deleteCategory', category_id = category.id )}}">Delete</a>
+                <a href="{{url_for('editCategory', category_id = category.id )}}">Edit</a>
+                <a href="{{url_for('deleteCategory', category_id = category.id )}}">Delete</a>
 		{% endfor %}
 	{% endif %}
 {% endblock %}

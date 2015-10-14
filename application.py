@@ -221,6 +221,7 @@ def getUserID(email):
 
 
 #Show all books if no category is passed otherwise only show books for that category
+@app.route('/')
 @app.route('/books/')
 @app.route('/category/<int:category_id>/books/')
 def showBooks(category_id = None):
@@ -245,8 +246,8 @@ def showBooks(category_id = None):
                                books = books,
                                category_id = category_id,
                                categories = categories,
-    # if the user is logged in show their private books as well
                                )
+    # if the user is logged in show their private books as well
     else:
         if category_id:
             books = session.query(Book) \
@@ -393,21 +394,19 @@ def addBookCategory(book_id,category_list=[]):
     return
 
 ## List all categories
-@app.route('/')
 @app.route('/category/')
 def showCategories():
+    categories = getCategories()
     #categories = session.query(Category).order_by(asc(Category.name)).all()
     # If the user is logged in show their custom categories
     if 'username' in login_session:
-        categories = session.query(Category) \
-            .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
+        userCategories = session.query(Category) \
+            .filter(Category.user_id == login_session['user_id']) \
             .order_by(asc(Category.name)).all()
     # otherwise just show the public ones
     else:
-        categories = session.query(Category) \
-            .filter(Category.user_id == None) \
-            .order_by(asc(Category.name)).all()
-    return render_template('categories.html', categories = categories)
+        userCategories = None
+    return render_template('categories.html', userCategories = userCategories, categories = categories)
 
 def getCategories():
     #categories = session.query(Category).order_by(asc(Category.name)).all()
