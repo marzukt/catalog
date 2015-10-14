@@ -1,15 +1,44 @@
 {% extends "main.html" %}
 {% block content %}
-<a href="{{url_for('newBook', category_id = category_id)}}">Add Book</a>
+<!--flash any messages-->
+<div class = 'flash'>
+		      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+          
+        <ul>
+        {% for message in messages %}
+            <li> <strong> {{ message }} </strong> </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    {% endwith %}
+</div>
+<div>
+        <a href="{{url_for('newBook', category_id = category_id)}}">
+            <button class="btn btn-default" id="new-book">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Add Book
+            </button>
+        </a>
+</div>
+<div class="row-fluid">
 	{% if books !=[] %}	
 		{% for i in books %}
+        <div class="row">
+        <div class="col-md-3"
+            <img class="img-responsive" src={{i.cover}} alt="cover">
+        </div>
+        <div class="col-md-3">
+            <!--<label>-->
         <h2>{{i.name}}</h2>
 			<p>{{i.description}}</p>
-            <img src={{i.cover}} alt="cover">
             {% if user_id == i.user_id and user_id %}
                 <a href="{{url_for('editBook', book_id = i.id )}}">Edit Book</a>
                 <a href="{{url_for('deleteBook', book_id = i.id )}}">Delete Book</a>
             {% endif %}
+        </div>
+        </div>
 		{% endfor %}
 	{% endif %}
+</div>
 {% endblock %}
+
