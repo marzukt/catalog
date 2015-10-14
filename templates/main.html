@@ -1,9 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-	</head>
+	<link href='https://fonts.googleapis.com/css?family=Lato:400,700,300&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+    </head>
 	<body>
+        <div class="container">
+            {% include "header.html" %}
+<div class="row">
+  <div class="col-sm-3">
+    <div class="sidebar-nav">
+      <div class="navbar navbar-default" role="navigation">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <span class="visible-xs navbar-brand">Sidebar menu</span>
+        </div>
+        <div class="navbar-collapse collapse sidebar-navbar-collapse">
+          <ul class="nav navbar-nav">
+              {% if category_id %}
+              <li>
+              {% else %}  
+              <li class="active">
+              {% endif %}
+                    <a href="{{ url_for('showBooks') }}">All</a></li>
+              {% for cat in categories %}
+              {% if cat.id == category_id %}
+              <li class="active"><a href="{{ url_for('showBooks',category_id = cat.id) }}">{{ cat.name }}</a></li>
+              {% else %}
+              <li><a href="{{ url_for('showBooks',category_id = cat.id) }}">{{ cat.name }}</a></li>
+              {% endif %}
+              {% endfor %}
+                <li class="divider"></li>
+                <li>Custom categories</li>
+            <!--<li><a href="#">Reviews <span class="badge">1,118</span></a></li>-->
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-9">
 			{% block content %}
 			{% endblock %}
+  </div>
+</div>
+        </div>
 	</body>
 </html>

@@ -188,7 +188,8 @@ def gdisconnect():
 
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
-        return response
+        #return response
+        return redirect(url_for('showBooks'))
 
     else:
         # token was invalid
@@ -226,17 +227,19 @@ def showBooks(category_id = None):
     # If a category is provided only return books for that category
     # otherwise return all books available to user
     # if user is not logged in only show public books
+    categories = getCategories()
+    for cat in categories:
+        print cat.name
     if 'username' not in login_session:
         if category_id:
             books = session.query(Book) \
-                .filter_by(Book.public == True ) \
+                .filter(Book.public == True ) \
                 .filter(Book.id.in_(session.query(BookCategory.book_id) \
                                     .filter_by(category_id = category_id))) \
                 .order_by(asc(Book.name)).all()
         else:
-            books = session.query(Book).filter_by(Book.public == True) \
+            books = session.query(Book).filter(Book.public == True) \
                 .order_by(asc(Book.name)).all()
-        return render_template('books.html', books = books, category_id = category_id)
 
     # if the user is logged in show their private books as well
     else:
@@ -250,9 +253,10 @@ def showBooks(category_id = None):
             books = session.query(Book) \
                 .filter((Book.public == True) | (Book.user_id == login_session['user_id'])) \
                 .order_by(asc(Book.name)).all()
-        return render_template('books.html',
+    return render_template('books.html',
                                books = books,
                                category_id = category_id,
+                               categories = categories,
                                user_id = login_session['user_id'])
 
 # Show a single book
@@ -399,6 +403,20 @@ def showCategories():
             .filter(Category.user_id == None) \
             .order_by(asc(Category.name)).all()
     return render_template('categories.html', categories = categories)
+
+def getCategories():
+    #categories = session.query(Category).order_by(asc(Category.name)).all()
+    # If the user is logged in show their custom categories
+    if 'username' in login_session:
+        categories = session.query(Category) \
+            .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
+            .order_by(asc(Category.name)).all()
+    # otherwise just show the public ones
+    else:
+        categories = session.query(Category) \
+            .filter(Category.user_id == None) \
+            .order_by(asc(Category.name)).all()
+    return categories
 
 @app.route('/category/new/', methods = ['GET', 'POST'])
 def newCategory():
