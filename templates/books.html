@@ -28,7 +28,7 @@
             <img class="img-responsive" src={{i.cover}} alt="cover"
                 onerror="this.src='{{url_for("static", filename="book.jpg")}}'"/></a>
             <h4>{{i.name}}</h4>
-			<p>{{i.description}}</p>
+			<!--<p>{{i.description}}</p>-->
             {% if user_id == i.user_id and user_id %}
                 <a href="{{url_for('editBook', book_id = i.id , category_id = category_id)}}">Edit Book</a>
                 <a href="{{url_for('deleteBook', book_id = i.id )}}">Delete Book</a>
