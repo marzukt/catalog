@@ -24,12 +24,9 @@
 	{% if books !=[] %}	
 		{% for i in books %}
         <div class="col-xs-6 col-md-6 col-lg-4 nav book-tile text-center">
-            <!--add link to div-->
-            <!--see https://stackoverflow.com/questions/796087/make-a-div-into-a-link/3494108#3494108-->
             <a href="{{ url_for('showBook', book_id = i.id, category_id = category_id)}}">
-                <span class="hyperspan"></span>
             <img class="img-responsive" src={{i.cover}} alt="cover"
-                onerror="this.src='{{url_for("static", filename="book.jpg")}}'"/>
+                onerror="this.src='{{url_for("static", filename="book.jpg")}}'"/></a>
             <h4>{{i.name}}</h4>
 			<p>{{i.description}}</p>
             {% if user_id == i.user_id and user_id %}
