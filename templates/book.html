@@ -7,7 +7,7 @@
                 onerror="this.src='{{url_for("static", filename="book.jpg")}}'"/>
             <h4>{{book.name}}</h4>
 			<p>{{book.description}}</p>
-            <p>{{book.guttenberg_url}}</p>
+            <a href="{{book.guttenberg_url}}">Guttenberg</a>
             {% if user_id == book.user_id and user_id %}
                 <a href="{{url_for('editBook', book_id = book.id , category_id = category_id)}}">Edit Book</a>
                 <a href="{{url_for('deleteBook', book_id = book.id )}}">Delete Book</a>
