@@ -41,8 +41,10 @@
               {% endif %}
               {% endfor %}
                 <li class="divider"></li>
+                {% if user_id %}
                 <li>Custom categories</li>
                 <li><a href="{{ url_for('showCategories') }}">Edit User Categories</a>
+                    {% endif %}
             <!--<li><a href="#">Reviews <span class="badge">1,118</span></a></li>-->
           </ul>
         </div><!--/.nav-collapse -->
