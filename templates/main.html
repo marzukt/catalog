@@ -42,8 +42,9 @@
               {% endfor %}
                 <li class="divider"></li>
                 {% if user_id %}
+                <li><a href="{{ url_for('showMyBooks', user_id = user_id) }}">My Books</a></li>
                 <li>Custom categories</li>
-                <li><a href="{{ url_for('showCategories') }}">Edit User Categories</a>
+                <li><a href="{{ url_for('showCategories') }}">Edit User Categories</a></li>
                     {% endif %}
             <!--<li><a href="#">Reviews <span class="badge">1,118</span></a></li>-->
           </ul>

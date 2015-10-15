@@ -229,8 +229,6 @@ def showBooks(category_id = None):
     # otherwise return all books available to user
     # if user is not logged in only show public books
     categories = getCategories()
-    for cat in categories:
-        print cat.name
     if 'username' not in login_session:
         if category_id:
             books = session.query(Book) \
@@ -264,6 +262,25 @@ def showBooks(category_id = None):
                                category_id = category_id,
                                categories = categories,
                                user_id = login_session['user_id'])
+
+@app.route('/myBooks/<int:user_id>')
+def showMyBooks(user_id):
+    # If a category is provided only return books for that category
+    # otherwise return all books available to user
+    # if user is not logged in only show public books
+    if 'username' not in login_session:
+        return redirect('/login')
+    if login_session['user_id'] != user_id:
+        return "<script>function myFunction() {alert('You are not authorized to view this book.');}</script><body onload='myFunction()''>"
+    categories = getCategories()
+    books = session.query(Book).filter_by(user_id = user_id).order_by(asc(Book.name)).all()
+
+    return render_template('books.html',
+                            books = books,
+                            categories = categories,
+                            category_id = None,
+                            user_id = user_id
+                            )
 
 # Show a single book
 @app.route('/book/<int:book_id>/')
