@@ -267,12 +267,27 @@ def showBooks(category_id = None):
 
 # Show a single book
 @app.route('/book/<int:book_id>/')
-def showBook(book_id):
+@app.route('/category/<int:category_id>/book/<int:book_id>')
+def showBook(book_id,category_id = None):
+    categories = getCategories()
+    if 'user_id' in login_session:
+        user_id = login_session['user_id']
+    else:
+        user_id = None
     book = session.query(Book).filter_by(id = book_id).one()
+    #only a book's creator can remove it
+    if not book.public and book.user_id != user_id:
+        return "<script>function myFunction() {alert('You are not authorized to view this book.');}</script><body onload='myFunction()''>"
     output = ''
     output += 'id: {} , name: {}'.format(book.id, book.name)
     output += '</br>'
-    return output
+    #return output
+    return render_template('book.html',
+                           book = book,
+                           category_id = category_id,
+                           categories = categories,
+                           user_id = user_id,
+                           )
 
 # Add a book
 @app.route('/books/new/', methods=['GET','POST'])

@@ -1,0 +1,18 @@
+{% extends "main.html" %}
+{% block content %}
+<div class="row-fluid">
+        <div class="col-xs-6 col-md-6 col-lg-4 book-tile text-center">
+            <!--see https://stackoverflow.com/questions/796087/make-a-div-into-a-link/3494108#3494108-->
+            <img class="img-responsive" src={{book.cover}} alt="cover"
+                onerror="this.src='{{url_for("static", filename="book.jpg")}}'"/>
+            <h4>{{book.name}}</h4>
+			<p>{{book.description}}</p>
+            <p>{{book.guttenberg_url}}</p>
+            {% if user_id == book.user_id and user_id %}
+                <a href="{{url_for('editBook', book_id = book.id , category_id = category_id)}}">Edit Book</a>
+                <a href="{{url_for('deleteBook', book_id = book.id )}}">Delete Book</a>
+            {% endif %}
+        </div>
+</div>
+{% endblock %}
+
