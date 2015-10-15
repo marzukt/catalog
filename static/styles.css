@@ -1,12 +1,16 @@
-/* make sidebar nav vertical */ 
-     .book-tile {
-            margin-bottom: 20px;
-            padding-top: 20px;
-        }
-        .book-tile:hover {
-            background-color: #EEE;
-            cursor: pointer;
-        }
+* { font-family: 'Lato', sans-serif;
+    }
+/*.top-menu {*/
+    /*background-color: #EEE;*/
+/*}*/
+.book-tile {
+    margin-bottom: 20px;
+    padding-top: 20px;
+}
+.book-tile:hover {
+    background-color: #EEE;
+    cursor: pointer;
+}
 .hyperspan
 {
     position:absolute;
@@ -16,6 +20,7 @@
     top:0;
     z-index:1;
 }
+/* make sidebar nav vertical */ 
 @media (min-width: 768px) {
   .sidebar-nav .navbar .navbar-collapse {
     padding: 0;

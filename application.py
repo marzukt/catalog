@@ -271,7 +271,7 @@ def showMyBooks(user_id):
     if 'username' not in login_session:
         return redirect('/login')
     if login_session['user_id'] != user_id:
-        return "<script>function myFunction() {alert('You are not authorized to view this book.');}</script><body onload='myFunction()''>"
+        return "<script>function myFunction() {alert('You are not authorized to view this user's books.');}</script><body onload='myFunction()''>"
     categories = getCategories()
     books = session.query(Book).filter_by(user_id = user_id).order_by(asc(Book.name)).all()
 
