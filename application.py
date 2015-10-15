@@ -263,7 +263,7 @@ def showBooks(category_id = None):
                                categories = categories,
                                user_id = login_session['user_id'])
 
-@app.route('/myBooks/<int:user_id>')
+@app.route('/myBooks/<int:user_id>/')
 def showMyBooks(user_id):
     # If a category is provided only return books for that category
     # otherwise return all books available to user
