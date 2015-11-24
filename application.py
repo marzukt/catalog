@@ -382,7 +382,7 @@ def editBook(book_id,category_id = None):
         flash('Book {} sucessfully edited'.format(editedBook.name))
         return redirect(url_for('showBooks', category_id = category_id))
     else:
-        return render_template('editBook.html',
+        return render_template('editbook.html',
                                book_id = book_id,
                                book = editedBook,
                                categories = categories,
