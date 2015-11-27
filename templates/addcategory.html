@@ -11,5 +11,6 @@
 		<a href = '{{url_for('showCategories')}}'>
             <button type="button">Cancel</button>
         </a>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 	</form>
 {% endblock %}

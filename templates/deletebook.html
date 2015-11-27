@@ -8,6 +8,7 @@
         <button type="button" class="btn btn-default">Cancel</button>
     </a>
 
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 </form>
 
 {% endblock %}

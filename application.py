@@ -7,6 +7,8 @@ from database_setup import Base, User, Book, Category, BookCategory
 from flask import session as login_session
 # use random and string to generate state token
 import random, string
+# seasurf for csrf
+from flask.ext.seasurf import SeaSurf
 
 #for creating a flow object from client secrets json file
 from oauth2client.client import flow_from_clientsecrets
@@ -20,6 +22,7 @@ from flask import make_response
 import requests
 
 app = Flask(__name__)
+csrf = SeaSurf(app)
 #load client secrets file
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
@@ -81,6 +84,7 @@ def showLogin():
     login_session['state'] = state
     return render_template('login.html', STATE=state)
 
+@csrf.exempt
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # validate state token  against the state token server provided
