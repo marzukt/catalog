@@ -14,6 +14,7 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 import httplib2
 import json
+from dict2xml import dict2xml as xmlify
 #for creating response object to send to client
 from flask import make_response
 import requests
@@ -31,24 +32,44 @@ session = DBSession()
 
 # JSON APIS
 #return whole catalog
-@app.route('/catalog/JSON')
-def catalogJSON():
+def catalogDict():
+    """Return a dictionary of the entire catalog"""
     categories = session.query(Category).order_by(asc(Category.name)).all()
     catlist = []
     catbook = {}
     for category in categories:
-        print category.name
         books = session.query(Book).filter(Book.id.in_(session.query(
             BookCategory.book_id).filter_by(category_id = category.id))).all()
         catbook = category.serialize
-        catbook['Books'] = [book.serialize for book in books]
+        catbook['Book'] = [book.serialize for book in books]
         catlist.append(catbook)
-    return jsonify(Categories = catlist)
+    catalog = {"Category":catlist}
+    return catalog
+
+@app.route('/catalog/JSON')
+def catalogJSON():
+    """Return entire catalog in json format"""
+    return jsonify(Categories = catalogDict())
+
+@app.route('/catalog/XML')
+def catalogXML():
+    """Return entire catalog in XML format"""
+    return app.response_class(xmlify(catalogDict(),wrap="Catalog", indent="   "),
+                              mimetype='application/xml')
 
 @app.route('/books/<int:book_id>/JSON')
 def bookJSON(book_id):
+    """Return  a specific book in JSON format"""
     book = session.query(Book).filter_by(id = book_id).one()
     return jsonify(Book = book.serialize)
+
+@app.route('/books/<int:book_id>/XML')
+def bookXML(book_id):
+    """Return  a specific book in XML format"""
+    book = session.query(Book).filter_by(id = book_id).one()
+    return app.response_class(xmlify(book.serialize, wrap="Book",indent = "    "),
+                              mimetype='application/xml')
+
 
 # Create state token
 @app.route('/login')
