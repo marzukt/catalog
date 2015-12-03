@@ -20,6 +20,8 @@ from dict2xml import dict2xml as xmlify
 #for creating response object to send to client
 from flask import make_response
 import requests
+# for login required decorator
+from functools import wraps
 
 app = Flask(__name__)
 csrf = SeaSurf(app)
@@ -32,6 +34,15 @@ engine = create_engine('sqlite:///catalog.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+def login_required(f):
+    """decorator to check login status """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in login_session:
+            return redirect('/login')
+        return f(*args,**kwargs)
+    return decorated_function
 
 # JSON APIS
 #return whole catalog
@@ -289,12 +300,11 @@ def showBooks(category_id = None):
                                user_id = login_session['user_id'])
 
 @app.route('/myBooks/<int:user_id>/')
+@login_required
 def showMyBooks(user_id):
     # If a category is provided only return books for that category
     # otherwise return all books available to user
     # if user is not logged in only show public books
-    if 'username' not in login_session:
-        return redirect('/login')
     if login_session['user_id'] != user_id:
         return "<script>function myFunction() {alert('You are not authorized to view this user's books.');}</script><body onload='myFunction()''>"
     categories = getCategories()
@@ -334,10 +344,9 @@ def showBook(book_id,category_id = None):
 # Add a book
 @app.route('/books/new/', methods=['GET','POST'])
 @app.route('/category/<int:category_id>/books/new', methods=['GET','POST'])
+@login_required
 def newBook(category_id = None):
     # if not logged in redirect to login page before user can see form
-    if 'username' not in login_session:
-        return redirect('/login')
     # public categories and user's own categories if they exist
     categories = session.query(Category) \
         .filter((Category.user_id == login_session['user_id']) | (Category.user_id == None)) \
@@ -367,10 +376,9 @@ def newBook(category_id = None):
 # Edit a book
 @app.route('/books/<int:book_id>/edit/', methods=['GET','POST'])
 @app.route('/category/<int:category_id>/books/<int:book_id>/edit/', methods=['GET','POST'])
+@login_required
 def editBook(book_id,category_id = None):
     # if the user is not logged in redirect to the login page
-    if 'username' not in login_session:
-        return redirect('/login')
     editedBook = session.query(Book).filter_by(id = book_id).one()
     # Only the creator can edit a book
     if login_session['user_id'] != editedBook.user_id:
@@ -416,9 +424,8 @@ def editBook(book_id,category_id = None):
 
 # Delete a book
 @app.route('/books/<int:book_id>/delete/', methods = ['GET','POST'])
+@login_required
 def deleteBook(book_id):
-    if 'username' not in login_session:
-        return redirect('/login')
     bookToDelete = session.query(Book).filter_by(id = book_id).one()
     #only a book's creator can remove it
     if bookToDelete.user_id != login_session['user_id']:
@@ -482,9 +489,8 @@ def getCategories():
     return categories
 
 @app.route('/category/new/', methods = ['GET', 'POST'])
+@login_required
 def newCategory():
-    if 'username' not in login_session:
-        return redirect('/login')
     if request.method == 'POST':
         newCategory = Category(name = request.form['name'],
                        description = request.form['description'],
@@ -499,9 +505,8 @@ def newCategory():
 
 # Edit a category
 @app.route('/category/<int:category_id>/edit/', methods = ['GET','POST'])
+@login_required
 def editCategory(category_id):
-    if 'username' not in login_session:
-        return redirect('/login')
     editedCategory = session.query(Category).filter_by(id = category_id).one()
     if login_session['user_id'] != editedCategory.user_id:
         return "<script>function myFunction() {alert('You are not authorized to edit this category.');}</script><body onload='myFunction()''>"
@@ -518,9 +523,8 @@ def editCategory(category_id):
 
 # Delete a category
 @app.route('/category/<int:category_id>/delete/', methods = ['GET','POST'])
+@login_required
 def deleteCategory(category_id):
-    if 'username' not in login_session:
-        return redirect('/login')
     categoryToDelete = session.query(Category).filter_by(id = category_id).one()
     if login_session['user_id'] != categoryToDelete.user_id:
         return "<script>function myFunction() {alert('You are not authorized to delete this category.');}</script><body onload='myFunction()''>"
