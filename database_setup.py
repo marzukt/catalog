@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy import create_engine
 
 Base = declarative_base()
@@ -39,6 +39,7 @@ class Book(Base):
     cover = Column(String(250))
     guttenberg_url = Column(String(250))
     amazon_url = Column(String(250))
+    isbn = Column(String(13))
     public = Column(Boolean, default = True)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
@@ -74,9 +75,9 @@ class BookCategory(Base):
 
     id = Column(Integer, primary_key = True)
     book_id = Column(Integer, ForeignKey('book.id'))
-    book = relationship(Book)
+    book = relationship(Book,backref=backref("bookcategory", cascade="all, delete-orphan"))
     category_id = Column(Integer, ForeignKey('category.id'))
-    category = relationship(Category)
+    category = relationship(Category,backref=backref("bookcategory", cascade="all, delete-orphan"))
 
 
 engine = create_engine('sqlite:///catalog.db')
