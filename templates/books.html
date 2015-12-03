@@ -25,7 +25,12 @@
 		{% for i in books %}
         <div class="col-xs-6 col-md-6 col-lg-4 nav book-tile text-center">
             <a href="{{ url_for('showBook', book_id = i.id, category_id = category_id)}}">
-            <img class="img-responsive" src={{i.cover}} alt="cover"
+            {% if not i.cover and i.isbn %}
+            <!-- uses context processor to get build the open library cover  api url if needed -->
+              <img class="img-responsive" src={{ openLibraryCoverUrl(i.isbn) }} alt="cover"
+            {% else %}
+              <img class="img-responsive" src={{i.cover}} alt="cover"
+            {% endif %}
                 onerror="this.src='{{url_for("static", filename="book.jpg")}}'"/></a>
             <h4>{{i.name}}</h4>
 			<!--<p>{{i.description}}</p>-->

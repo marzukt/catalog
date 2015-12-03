@@ -44,6 +44,19 @@ def login_required(f):
         return f(*args,**kwargs)
     return decorated_function
 
+# context processor for open library covers
+# accesible in templates via {{ openLibraryCoverUrl(isbn) }}
+@app.context_processor
+def utilityProcessor():
+    def openLibraryCoverUrl(isbn):
+        """Return open library cover url for a given ISBN"""
+        return("{url}/{key}/{value}-{size}.jpg".format(url = "http://covers.openlibrary.org/b",
+                                                      key = "isbn",
+                                                      value = isbn,
+                                                       size = "M" # medium format size
+                                                      ))
+    return dict(openLibraryCoverUrl = openLibraryCoverUrl)
+
 # JSON APIS
 #return whole catalog
 def catalogDict():

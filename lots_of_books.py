@@ -90,6 +90,7 @@ session.commit()
 
 Book5 = Book(name = "Great Expectations",
              description = ' some stuff happens',
+             isbn = '9780333546079',
              user_id = user_id.id)
 session.add(Book5)
 session.commit()
@@ -135,3 +136,13 @@ BookCategory6 = BookCategory(book_id = Book8.id,
 session.add(BookCategory6)
 session.commit()
 
+Book9 = Book(name = "Shantaram",
+             isbn = "0312330529",
+             user_id = user_id.id)
+session.add(Book9)
+session.commit()
+
+BookCategory7 = BookCategory(book_id = Book9.id,
+                            category_id = Category2.id)
+session.add(BookCategory7)
+session.commit()
